@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hello AngularJS</title>
+    <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.min.css">
+    <script src="angular.min.js"></script>
+</head>
+<body ng-app="FamApp">
+	<div ng-controller="MainController">
+		{{ message }}
+		<h1>Senior Project Show Cases CoE-ICT 2017</h1>
+		<div class="container">
+			<div class="row">
+				<table class="table table-striped">
+
+					<thead>
+						<tr> <!-- table row -->
+							<th></th><!-- table headder -->
+							<th>Project</th>
+							<th>like</th>
+							<th>share</th>
+						</tr>
+					</thead>
+
+					<tbody>
+						<tr>
+							<td>1</td>
+							<td>test project</td>
+							<td>1</td>
+							<td>1</td>
+						</tr>
+						<tr>
+							<td>1</td>
+							<td>test project</td>
+							<td>1</td>
+							<td>1</td>
+						</tr>
+					</tbody>
+
+				</table>
+			</div>
+		</div>
+	</div>
+</body>
+<script>
+	var myApp = angular.module('FamApp', []);
+	myApp.controller('MainController', function($scope) {
+    	$scope.message = "Hello AngularJS";
+	});
+</script>
+</html>

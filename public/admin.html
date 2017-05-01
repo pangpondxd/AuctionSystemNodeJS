@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ระบบประมูลสินค้า</title>
+    <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.min.css">
+    <script src="angular.min.js"></script>
+    <script src="angular-resource.min.js"></script>
+    <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="http://localhost:8000/socket.io/socket.io.js"></script>
+    <style>
+		body {
+		    background-color: lightgray;
+		}
+
+		h1 {
+		    color: black;
+		    text-align: center;
+		}
+
+		h2 {
+		    color: red;
+		    text-align: center;
+		}
+
+		h3 {
+		    color: gray;
+		   
+		}
+		table {
+		    border-collapse: collapse;
+		    width: 100%;
+		}
+
+		 td {
+		    text-align: left;
+		    padding: 8px;
+		    
+		   
+		}
+		th{
+		    text-align: left;
+		    padding: 8px;
+		    color: white;
+		   background-color: gray
+		}
+
+		tr:nth-child(even){background-color: #f2f2f2}
+		
+</style>
+</head>
+<body ng-app="FamApp" background=" /images/page.jpg ">
+
+<nav class="navbar navbar-inverse">
+  <ul class="nav navbar-nav">
+    <li><a href="#">Home</a></li>
+    <li><a href="#">Auction</a></li>
+  </ul>
+  <p class="navbar-text">Client / Server courses</p>
+</nav>
+
+	<div ng-controller="MainController">
+		<div class="container">
+			<div class="row">
+				<h1>ระบบจัดการสินค้าการประมูล</h1>
+				<div align="middle" ><h3><br>ประกาศ:<input type ="text" id="input" ></input><button type="button" id="submit">Submit </button></h3>
+		        
+		        <h2 id="bids"></h2></div>
+				<table class="table table-striped" style="overflow-x:auto;">
+
+					<thead>
+						<tr> <!-- table row -->
+							<th></th><!-- table headder -->
+							<th>รหัสสินค้า</th>
+							<th>ชื่อสินค้า</th>
+							<th>ราคา</th>
+							<th>จัดการ</th>
+							<th></th>
+						</tr>
+					</thead>
+
+					<tbody>
+						<tr ng-repeat="project in projects" ng-if="!isEmpty(project)">
+							<td>{{ $index+1 }}</td>
+							<td>{{ project.sid }}</td>
+							<td>{{ project.name }}</td>
+							<td>{{ project.price }}</td>
+
+							<td><button ng-click="edit(project.id)" class="btn btn-primary">แก้ไข</button></td>
+							<td><button ng-click="delete(project.id)" class="btn btn-danger">ลบ</button></td>
+						</tr>
+					</tbody>
+
+				</table>
+
+				<hr>
+				<div class="col col-md-6">
+					<h3>สินค้าใหม่ (New Item)</h3>
+					<form>
+					  <div class="form-group">
+					    <label for="" style="color: gray" >รหัสสินค้า (S.id)</label>
+					    <input type="hidden" class="form-control" ng-model="idx">
+					    <input type="text" class="form-control" placeholder="Sid" ng-model="project.sid" ng-init="project.sid=''">
+					  </div>
+					  <div class="form-group">
+					    <label for="" style="color: gray" >ชื่อสินค้า (Name)</label>
+					    <input type="text" class="form-control" placeholder="Name" ng-model="project.name">
+					  </div>
+					  <div class="form-group">
+					    <label for="" style="color: gray" >ราคาตั้งต้น (Price)</label>
+					    <input type="text" class="form-control" placeholder="Price" ng-model="project.price" name="text_plain" onKeyUp="if(isNaN(this.value)){ alert('กรุณากรอกตัวเลข'); this.value='';}">
+					  </div>
+					  <button type="submit" class="btn btn-default" ng-click="add()">เพิ่ม (Add)</button>
+					</form>
+				</div>
+				<div class="col col-md-6">
+					<h3>แก้ไขสินค้า (Edit Item)</h3>
+					<form>
+					  <div class="form-group">
+					    <label for="" style="color: gray" >รหัสสินค้า (S.id)</label>
+					    <input type="hidden" class="form-control" ng-model="Editproject.id">
+					    <input type="text" class="form-control" placeholder="SId" ng-model="Editproject.sid" ng-init="Editproject.sid=''">
+					  </div>
+					  <div class="form-group">
+					    <label for="" style="color: gray" >ชื่อสินค้า (Name)</label>
+					    <input type="text" class="form-control" placeholder="Name" ng-model="Editproject.name">
+					  </div>
+					  <div class="form-group">
+					    <label for="" style="color: gray" >ราคาตั้งต้น (Price)</label>
+					    <input type="text" class="form-control" placeholder="Price" ng-model="Editproject.price" name="text_plain" onKeyUp="if(isNaN(this.value)){ alert('กรุณากรอกตัวเลข'); this.value='';}">
+					  </div>
+					  <button type="submit" class="btn btn-default" ng-click="update(Editproject.id)">บันทึก (Save)</button>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+        
+        
+
+</body>
+<script>
+	var myApp = angular.module('FamApp', ['ngResource']);
+	myApp.controller('MainController', function($scope,$resource) {
+		var Project = $resource('/api/projects/:project_id',{'project_id' : '@id'},
+		{
+			'delete' : { 'method' :'delete' },
+			update : { method : 'PUT'}
+		})
+
+		$scope.projects = Project.query()  // reload data
+		$scope.Editproject = {}
+
+		$scope.add = function(){
+			Project.save({
+				sid : $scope.project.sid,
+				name: $scope.project.name,
+				price : $scope.project.price
+			})
+			$scope.projects = Project.query()
+		}
+		
+		$scope.delete = function(id){
+			Project.delete({'project_id' : id})
+			$scope.projects = Project.query()
+		}
+
+		$scope.isEmpty = function(item){
+			return Object.keys(item).length == 1
+		}
+
+		$scope.edit = function(id){
+			 Project.get({ project_id: id },function(project){
+			 	$scope.Editproject.id = project.id
+		        $scope.Editproject.sid = project.sid
+		        $scope.Editproject.name = project.name
+		        $scope.Editproject.price = project.price
+			 })
+
+			 $scope.editor = true
+		}
+
+		$scope.update = function(id){
+			Project.update({ project_id: id },
+			{
+				sid : $scope.Editproject.sid,
+				name : $scope.Editproject.name,
+				price : $scope.Editproject.price
+				
+			})
+
+
+			$scope.projects = Project.query()
+		}
+	});
+
+
+
+
+
+</script>
+
+<script>
+	
+var socket = io.connect('http://localhost:8000/');
+
+ socket.on('bid', function(content) {
+ 		console.log(content)
+      $('#bids').append(content.amount + "</br>");
+ });
+ socket.on('other bid',function(bid){
+ 	 $('#bids').append(bid + "</br>");
+ })
+
+$('#submit').click(function(){
+     socket.emit('bid', { "amount" : $('#input').val() });
+});
+
+
+  
+</script>
+
+
+</html>
